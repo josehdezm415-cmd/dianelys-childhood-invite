@@ -15,55 +15,7 @@ const stagger = {
 
 const baseUrl = import.meta.env.BASE_URL;
 const photo = (name) => `${baseUrl}photos/${name}`;
-
-function createMemoryMusic() {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) return null;
-
-  const context = new AudioContext();
-  const master = context.createGain();
-  master.gain.value = 0.045;
-  master.connect(context.destination);
-
-  const notes = [523.25, 659.25, 783.99, 987.77, 880, 659.25, 587.33, 783.99];
-  let step = 0;
-
-  const playNote = () => {
-    const now = context.currentTime;
-    const osc = context.createOscillator();
-    const gain = context.createGain();
-    const filter = context.createBiquadFilter();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(notes[step % notes.length], now);
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1800, now);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(master);
-    osc.start(now);
-    osc.stop(now + 1.7);
-    step += 1;
-  };
-
-  playNote();
-  const interval = window.setInterval(playNote, 760);
-
-  return {
-    stop() {
-      window.clearInterval(interval);
-      const now = context.currentTime;
-      master.gain.cancelScheduledValues(now);
-      master.gain.setValueAtTime(master.gain.value, now);
-      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-      window.setTimeout(() => context.close(), 450);
-    },
-  };
-}
+const musicTrack = `${baseUrl}audio/dianelys-lullaby.mp3`;
 
 const memories = [
   {
@@ -116,18 +68,25 @@ function App() {
     setTouchStart(null);
   };
 
-  const toggleMusic = () => {
+  const toggleMusic = async () => {
     if (musicOn) {
-      musicRef.current?.stop();
-      musicRef.current = null;
+      musicRef.current?.pause();
       setMusicOn(false);
       return;
     }
 
-    const player = createMemoryMusic();
-    if (player) {
-      musicRef.current = player;
+    if (!musicRef.current) {
+      const audio = new Audio(musicTrack);
+      audio.loop = true;
+      audio.volume = 0.62;
+      musicRef.current = audio;
+    }
+
+    try {
+      await musicRef.current.play();
       setMusicOn(true);
+    } catch (error) {
+      setMusicOn(false);
     }
   };
 
@@ -146,7 +105,7 @@ function App() {
           <a href="#recuerdos">Fotos</a>
           <a href="#mensaje">Mensaje</a>
           <button className={`music-toggle ${musicOn ? 'playing' : ''}`} type="button" onClick={toggleMusic} aria-pressed={musicOn}>
-            {musicOn ? 'Pausar música' : 'Música'}
+            {musicOn ? 'Pausar canción' : 'Canción'}
           </button>
         </div>
       </nav>
