@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { motion } from 'framer-motion';
 import './styles.css';
@@ -50,6 +50,21 @@ const memories = [
 ];
 
 function App() {
+  const [activeMemory, setActiveMemory] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const active = memories[activeMemory];
+
+  const goToMemory = (direction) => {
+    setActiveMemory((current) => (current + direction + memories.length) % memories.length);
+  };
+
+  const handleTouchEnd = (event) => {
+    if (touchStart === null) return;
+    const delta = touchStart - event.changedTouches[0].clientX;
+    if (Math.abs(delta) > 42) goToMemory(delta > 0 ? 1 : -1);
+    setTouchStart(null);
+  };
+
   return (
     <main className="page">
       <div className="ambient ambient-one" />
@@ -138,28 +153,50 @@ function App() {
         </motion.div>
 
         <motion.div className="true-stack-layout" variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.18 }}>
-          <motion.div className="photo-pile" variants={fadeUp} aria-label="Fotos apiladas de Dianelys">
-            {memories.map((memory, index) => (
-              <div className={`pile-card pile-${index + 1}`} key={memory.title}>
-                <img src={memory.image} alt={memory.title} style={{ objectPosition: memory.position }} />
-              </div>
-            ))}
+          <motion.div
+            className="photo-pile swipe-pile"
+            variants={fadeUp}
+            aria-label="Fotos apiladas de Dianelys"
+            onTouchStart={(event) => setTouchStart(event.touches[0].clientX)}
+            onTouchEnd={handleTouchEnd}
+            onClick={() => goToMemory(1)}
+          >
+            {memories.map((memory, index) => {
+              const offset = (index - activeMemory + memories.length) % memories.length;
+              return (
+                <div className={`pile-card pile-position-${offset}`} key={memory.title} aria-hidden={offset > 2}>
+                  <img src={memory.image} alt={memory.title} style={{ objectPosition: memory.position }} />
+                </div>
+              );
+            })}
+            <button className="stack-nav prev" type="button" aria-label="Foto anterior" onClick={(event) => { event.stopPropagation(); goToMemory(-1); }}>‹</button>
+            <button className="stack-nav next" type="button" aria-label="Siguiente foto" onClick={(event) => { event.stopPropagation(); goToMemory(1); }}>›</button>
             <div className="pile-label">
-              <span>5 fotos</span>
-              <strong>recuerdos apilados</strong>
+              <span>{activeMemory + 1} de {memories.length}</span>
+              <strong>desliza o toca</strong>
             </div>
           </motion.div>
 
           <motion.div className="stack-story" variants={fadeUp}>
-            {memories.map((memory, index) => (
-              <div className="story-row" key={memory.title}>
-                <span>0{index + 1}</span>
-                <div>
-                  <h3>{memory.title}</h3>
-                  <p>{memory.text}</p>
-                </div>
+            <div className="story-row active-story">
+              <span>0{activeMemory + 1}</span>
+              <div>
+                <h3>{active.title}</h3>
+                <p>{active.text}</p>
               </div>
-            ))}
+            </div>
+            <div className="story-dots" aria-label="Seleccionar foto">
+              {memories.map((memory, index) => (
+                <button
+                  type="button"
+                  className={index === activeMemory ? 'active' : ''}
+                  key={memory.title}
+                  aria-label={`Ver foto ${index + 1}`}
+                  onClick={() => setActiveMemory(index)}
+                />
+              ))}
+            </div>
+            <p className="swipe-helper">Desliza la foto o toca las flechas para recorrer los recuerdos.</p>
           </motion.div>
         </motion.div>
       </section>
