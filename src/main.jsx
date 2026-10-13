@@ -137,23 +137,30 @@ function App() {
           <p>Un estilo más premium, más editorial y más parecido a una invitación especial.</p>
         </motion.div>
 
-        <motion.div className="stacked-gallery" variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.18 }}>
-          {memories.map((memory, index) => (
-            <motion.article className="stack-card" variants={fadeUp} key={memory.title}>
-              <div className="stack-photo-shell">
-                <div className="stack-shadow one" aria-hidden="true" />
-                <div className="stack-shadow two" aria-hidden="true" />
-                <div className="stack-photo">
-                  <img src={memory.image} alt={memory.title} style={{ objectPosition: memory.position }} />
+        <motion.div className="true-stack-layout" variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.18 }}>
+          <motion.div className="photo-pile" variants={fadeUp} aria-label="Fotos apiladas de Dianelys">
+            {memories.map((memory, index) => (
+              <div className={`pile-card pile-${index + 1}`} key={memory.title}>
+                <img src={memory.image} alt={memory.title} style={{ objectPosition: memory.position }} />
+              </div>
+            ))}
+            <div className="pile-label">
+              <span>5 fotos</span>
+              <strong>recuerdos apilados</strong>
+            </div>
+          </motion.div>
+
+          <motion.div className="stack-story" variants={fadeUp}>
+            {memories.map((memory, index) => (
+              <div className="story-row" key={memory.title}>
+                <span>0{index + 1}</span>
+                <div>
+                  <h3>{memory.title}</h3>
+                  <p>{memory.text}</p>
                 </div>
               </div>
-              <div className="stack-copy">
-                <p className="memory-number">0{index + 1}</p>
-                <h3>{memory.title}</h3>
-                <p>{memory.text}</p>
-              </div>
-            </motion.article>
-          ))}
+            ))}
+          </motion.div>
         </motion.div>
       </section>
 
