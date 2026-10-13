@@ -15,7 +15,7 @@ const stagger = {
 
 const baseUrl = import.meta.env.BASE_URL;
 const photo = (name) => `${baseUrl}photos/${name}`;
-const musicTrack = `${baseUrl}audio/dianelys-lullaby.mp3`;
+const musicTrack = `${baseUrl}audio/a-thousand-years-instrumental.mp3`;
 
 const memories = [
   {
