@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { motion } from 'framer-motion';
 import './styles.css';
@@ -15,6 +15,55 @@ const stagger = {
 
 const baseUrl = import.meta.env.BASE_URL;
 const photo = (name) => `${baseUrl}photos/${name}`;
+
+function createMemoryMusic() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return null;
+
+  const context = new AudioContext();
+  const master = context.createGain();
+  master.gain.value = 0.045;
+  master.connect(context.destination);
+
+  const notes = [523.25, 659.25, 783.99, 987.77, 880, 659.25, 587.33, 783.99];
+  let step = 0;
+
+  const playNote = () => {
+    const now = context.currentTime;
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    const filter = context.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(notes[step % notes.length], now);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1800, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(master);
+    osc.start(now);
+    osc.stop(now + 1.7);
+    step += 1;
+  };
+
+  playNote();
+  const interval = window.setInterval(playNote, 760);
+
+  return {
+    stop() {
+      window.clearInterval(interval);
+      const now = context.currentTime;
+      master.gain.cancelScheduledValues(now);
+      master.gain.setValueAtTime(master.gain.value, now);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+      window.setTimeout(() => context.close(), 450);
+    },
+  };
+}
 
 const memories = [
   {
@@ -52,6 +101,8 @@ const memories = [
 function App() {
   const [activeMemory, setActiveMemory] = useState(0);
   const [touchStart, setTouchStart] = useState(null);
+  const [musicOn, setMusicOn] = useState(false);
+  const musicRef = useRef(null);
   const active = memories[activeMemory];
 
   const goToMemory = (direction) => {
@@ -63,6 +114,21 @@ function App() {
     const delta = touchStart - event.changedTouches[0].clientX;
     if (Math.abs(delta) > 42) goToMemory(delta > 0 ? 1 : -1);
     setTouchStart(null);
+  };
+
+  const toggleMusic = () => {
+    if (musicOn) {
+      musicRef.current?.stop();
+      musicRef.current = null;
+      setMusicOn(false);
+      return;
+    }
+
+    const player = createMemoryMusic();
+    if (player) {
+      musicRef.current = player;
+      setMusicOn(true);
+    }
   };
 
   return (
@@ -79,6 +145,9 @@ function App() {
           <a href="#detalles">Detalles</a>
           <a href="#recuerdos">Fotos</a>
           <a href="#mensaje">Mensaje</a>
+          <button className={`music-toggle ${musicOn ? 'playing' : ''}`} type="button" onClick={toggleMusic} aria-pressed={musicOn}>
+            {musicOn ? 'Pausar música' : 'Música'}
+          </button>
         </div>
       </nav>
 
