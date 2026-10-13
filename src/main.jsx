@@ -110,12 +110,8 @@ function App() {
         >
           <div className="hero-photo-card hero-photo-back one" aria-hidden="true" />
           <div className="hero-photo-card hero-photo-back two" aria-hidden="true" />
-          <div className="hero-photo-card hero-photo-main">
+          <div className="hero-photo-card hero-photo-main clean-hero-photo">
             <img src={photo('dianelys-hero.jpg')} alt="Dianelys sonriendo cuando era bebé" />
-            <div className="photo-caption">
-              <span>Recuerdo favorito</span>
-              <strong>Una sonrisa para siempre</strong>
-            </div>
           </div>
           <div className="floating-note">Hecha con amor</div>
         </motion.div>
